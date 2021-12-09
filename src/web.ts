@@ -14,9 +14,24 @@ export class OAuth2ClientPluginWeb extends WebPlugin implements OAuth2ClientPlug
     /**
      * Get a new access token using an existing refresh token.
      */
-    async refreshToken(_options: OAuth2RefreshTokenOptions): Promise<any> {
-        return new Promise<any>((_resolve, reject) => {
-            reject(new Error("Functionality not implemented for PWAs yet"));
+    async refreshToken(options: OAuth2RefreshTokenOptions): Promise<any> {
+        const self = this;
+        return new Promise<any>((resolve, reject) => {
+            const tokenRequest = new XMLHttpRequest();
+            tokenRequest.onload = function () {
+                if (this.status === 200) {
+                    let accessTokenResponse = JSON.parse(this.response);
+                    self.requestResource(accessTokenResponse.access_token, resolve, reject, null, accessTokenResponse);
+                }
+            };
+            tokenRequest.onerror = function () {
+                self.doLog("ERR_GENERAL: See client logs. It might be CORS. Status text: " + this.statusText);
+                reject(new Error("ERR_GENERAL"));
+            };
+            tokenRequest.open("POST", options.accessTokenEndpoint, true);
+            tokenRequest.setRequestHeader('accept', 'application/json');
+            tokenRequest.setRequestHeader('content-type', 'application/x-www-form-urlencoded');
+            tokenRequest.send(WebUtils.getRefreshTokenEndpointData(options));
         });
     }
 
@@ -44,8 +59,7 @@ export class OAuth2ClientPluginWeb extends WebPlugin implements OAuth2ClientPlug
                 this.windowHandle = window.open(
                     authorizationUrl,
                     this.webOptions.windowTarget,
-                    this.webOptions.windowOptions,
-                    this.webOptions.windowReplace);
+                    this.webOptions.windowOptions);
                 // wait for redirect and resolve the
                 this.intervalId = window.setInterval(() => {
                     if (loopCount-- < 0) {

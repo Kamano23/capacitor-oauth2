@@ -1,4 +1,4 @@
-import { OAuth2AuthenticateOptions } from "./definitions";
+import { OAuth2AuthenticateOptions, OAuth2RefreshTokenOptions } from "./definitions";
 // import sha256 from "fast-sha256";
 
 
@@ -53,6 +53,14 @@ export class WebUtils {
         body += encodeURIComponent('redirect_uri') + '=' + encodeURIComponent(options.redirectUrl) + '&';
         body += encodeURIComponent('code') + '=' + encodeURIComponent(code) + '&';
         body += encodeURIComponent('code_verifier') + '=' + encodeURIComponent(options.pkceCodeVerifier);
+        return body;
+    }
+
+    static getRefreshTokenEndpointData(options: OAuth2RefreshTokenOptions): string {
+        let body = '';
+        body += encodeURIComponent('grant_type') + '=' + encodeURIComponent('refresh_token') + '&';
+        body += encodeURIComponent('client_id') + '=' + encodeURIComponent(options.appId) + '&';
+        body += encodeURIComponent('refresh_token') + '=' + encodeURIComponent(options.refreshToken);
         return body;
     }
 
